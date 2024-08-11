@@ -1,0 +1,222 @@
+---
+title: "Dawn of Victorian Home Solar"
+author: "Sean Brooker | s3998599"
+date: "`r Sys.Date()`"
+output: 
+  ioslides_presentation:
+    widescreen: true
+    incremental: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(plotly)
+```
+
+```{r data-import, include=FALSE}
+load("energy_prod.RData")
+load('energy_cons.RData')
+load('uptake.RData')
+load('data/solar_emissions.RData')
+```
+
+<!-- REFERENCE: emiltb, 2017 -->
+<style>
+div.footnotes {
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 10px;
+  width: 80%;
+  font-size: 0.6em;
+}
+</style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+$(document).ready(function() {
+  $('slide:not(.backdrop):not(.title-slide)').append('<div class=\"footnotes\">');
+
+  $('footnote').each(function(index) {
+    var text  = $(this).html();
+    var fnNum = (index+1).toString();
+    $(this).html(fnNum.sup());
+
+    var footnote   = fnNum + '. ' + text + '<br/>';
+    var oldContent = $(this).parents('slide').children('div.footnotes').html();
+    var newContent = oldContent + footnote;
+    $(this).parents('slide').children('div.footnotes').html(newContent);
+  });
+});
+</script>
+<!-- END REFERENCE
+emiltb (2017) *How to insert footnotes in ioslides presentations using RMarkdown*, Stack Overflow website. https://stackoverflow.com/a/45569765
+-->
+
+## Introduction
+- Australia, overall, has a an "insufficient" stance on climate action. At least according to the Climate Change Tracker, an independent scientific project that tracks government action. 
+- The Tracker has found that while Australia has improved in recent years, we still fall critically short of genuine change that will lead to the required improvement.<footnote>(CAT, 2022)</footnote>
+- In 2015, we committed to the *Paris Accords* alongside 195 other countries. In part, this was a promise to cut global emissions by half by 2030. With our contribution to this effort currently sitting at a commitment of cutting emissions by 43%.
+
+## Energy Production {.smaller}
+<div style='float: left; width: 25%;'>
+- Victoria specifically aims to reduce their emissions by 45-50% by 2030<footnote>(Climate Change Vic, 2023)</footnote>
+- and while Victoria has made significant progress; having reduced energy from coal by over 26\% between 2015 and 2021,
+- Significant process is still needed to get to the 2030 goal
+</div>
+<div style='float: right; width: 75%;'>
+```{r energy-prod}
+gp <- ggplot(data=energy_prod_plt, aes(x=year, y=amount, color=source)) + 
+  geom_line(aes(group=source)) +
+  geom_line(data=goal, aes(x=year, y=amount, color=source, group=source), linetype='dashed') + 
+  theme( axis.text.x = element_text(angle=60, hjust=1)) + 
+  labs( title = 'Victorian Energy Production') + 
+  xlab('Year') +
+  ylab('Energy Produced (PJ)') +
+  scale_color_discrete(name='Fuel Source', 
+                       labels=c('Coal', 'Oil & Gas', 'Renewables'),
+                       type=c('#d95f02', '#7570b3', '#1b9e77'))
+
+ggplotly(gp) %>%
+  add_segments(x=9, xend=9, y=0, yend=200000, showlegend=FALSE, color=I("black")) %>%
+  add_segments(x=22, xend=22, y=0, yend=200000, showlegend=FALSE, color=I('black')) %>%
+  add_text(x=12.5, y=190000, showlegend=FALSE, text='Paris Agreement Signed') %>%
+  add_text(x=18, y=170000, showlegend=FALSE, text='Paris Agreement Deadline') %>%
+  layout( legend=list( itemclick='toggleothers' ) )
+  
+```
+<p style='text-align: center; font-size: 0.5em;'>Source: (DCCEEW, 2022)</p>
+</div>
+
+## Energy Consumption { .smaller }
+<div style='float: left; width: 25%;'>
+- One way of helping to meet this target is reducing household energy usage;
+- Of the aforementioned produced energy, 16\% was used by households in 2020-21. 
+- According to the Australian Clean Energy Regulator (2021), this represents almost $50,000 kt$ of $CO_2$ emitted. 
+- This would take 250 million trees 20 years to re-absorb<footnote>(Bernet, 2021)</footnote>. 
+</div>
+<div style='float: right; width: 75%;'>
+```{r}
+gp <- ggplot(data=energy_con_plt, aes(x=year, y=amount*100, color=source)) + 
+  geom_line(aes(group=source)) +
+  labs( title = 'Victorian Energy Consumption',
+        subtitle = 'By Industry',
+        caption = 'Source: (DCCEEW, 2022)') + 
+  xlab('Year') +
+  ylab('Energy Consumed (% of total)') +
+  theme( axis.text.x = element_text(angle=60, hjust=1)) + 
+  scale_color_discrete(name='Industry', 
+                       labels=c('Transport', 'Commercial', 'Residential', 'Services', 'Industry'),
+                       type=c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00'))
+
+ggplotly(gp) %>% 
+  layout( legend=list(itemclick='toggleothers') ) %>%
+  add_annotations(text = "By industry, percentage of total energy consumed",
+                  x = 0, y = 1.065,
+                  yref = "paper", xref = "paper",
+                  xanchor = "middle", yanchor = "top",
+                  showarrow = FALSE,
+                  font = list(size = 15)
+  )
+```
+<p style='text-align: center; font-size: 0.5em;'>Source: (DCCEEW, 2022)</p>
+</div>
+
+## Reasons for Solar
+- One way of reducing household reliance of emission-generating energy sources is solar power. 
+- Home installed solar panels provided home owners with their own, emission free, source of energy; helping to reduce the overall amount of energy the state needs to produce. 
+- As a bonus, generating your own energy serves to reduce your energy bills and, in fact, the Australian Energy Council (2022) found that on average home owners saved enough on their energy bills to completely recover the costs of installations within ten years. 
+
+## Solar Uptake { .smaller }
+<div style='float: left; width: 25%;'>
+- While the number of Victorian homes with solar panels has been increasing,
+- Only just over one in five homes has them. 
+- This number is expected to rise to over one million households by 2028. 
+- Even if we built no new houses between 2020 and 2028, this would still be only be slightly under 40% of homes. 
+</div>
+<div style='float: right; width: 75%;'>
+```{r solar-uptake}
+# Percentage houses
+gp <- ggplot(data=uptake, aes(x=year, y=per_houses*100, group=1)) + 
+  geom_smooth(color='darkgreen', se=FALSE) + 
+  geom_point() + 
+  theme( axis.text.x = element_text(angle=60, hjust=1) ) + 
+  labs(title = 'Victorian Houses with Solar Panels',
+       subtitle = 'Percentage of total non-apartment dwellings') + 
+  xlab('Year') +
+  ylab('Proportion of Houses with Solar Panels (% of total)')
+
+ggplotly(gp) %>%
+  add_segments(x=11, xend=11, y=0, yend=25, color=I('black')) %>%
+  add_text(x=8.75, y=20, text="Vic. Gov. solar rebate launched") %>%
+  add_annotations( text='Note: excludes apartment and flat buildings',
+                   x = 0, y = -0.25,
+                   yref = "paper", xref = "paper",
+                   xanchor='left', yanchor='bottom',
+                   showarrow = FALSE) %>%
+  layout(annotations=list(text='',
+                          x=1, y=0,
+                          showarrow=FALSE,
+                          xref='paper', yref='paper',
+                          xanchor='right', yanchor='bottom'))
+```
+<p style='text-align: center; font-size: 0.5em;'>Source: (Clean Energy Regulator, 2023; ABS, 2022)</p>
+</div>
+
+## How much reduction { .smaller }
+<div style='float: left; width: 25%;'>
+- Hitting this one million homes target would lead to an emission decrease of almost $10,000kt$
+- However, if we take this up to even just 50%, only 10% more than projected, we could get down to only $25,000kt$ per year for homes
+</div>
+<div style='float: right; width: 75%;'>
+```{r}
+# Just like a simple bar chart
+df <- data.frame(scenario=c('no_change', '40% solar', '50% solar', '100% solar'),
+                 emissions=c(40057848, 30883356, 25827930, 0))
+gp <- ggplot(solar_emissions, aes(x=solar*100, y=emissions, group=1)) + 
+  geom_smooth() + 
+  labs( title='Emissions from energy used power households against percentage of houses with solar') +
+  xlab('Houses with Solar Panels (%)') +
+  ylab('CO2 Emissions (kt CO2e)')
+
+current_solar <- deframe(select(filter(uptake, year=='2019-20'),per_houses))*100
+ggplotly(gp)%>%
+  add_segments(x=current_solar, xend=current_solar, 
+               y=0, yend=52000, 
+               color=I('black'), 
+               showlegend=FALSE) %>%
+  add_text(x=current_solar, y=53000, 
+           text="2019-20 solar uptake", 
+           showlegend=FALSE) %>%
+  add_segments(x=40, xend=40, 
+               y=0, yend=52000, 
+               color=I('black'), 
+               showlegend=FALSE) %>%
+  add_text(x=55, y=50000, 
+           text="Expected 2028 solar uptake", 
+           showlegend=FALSE)
+```
+<p style='text-align: center; font-size: 0.4em;'>Source: (DCCEEW, 2022; Clean Energy Regulator, 2020; Clean Energy Regulator, 2023; ABS, 2022; Solar Victoria, 2023)
+Note: based of 2019-20 data</p>
+</div>
+
+## Conclusion
+- Significant progress is needed to meet the required emission reduction targets within Australia and Victoria,
+- and reducing household energy consumption through generating our own power with solar panels stands as an avenue of reducing overall emissions, both for Victoria and by extension Australia as a whole. 
+- More and more people having being taking up this opportunity, but projections still fall short of what will be required
+- But the significant environmental and, to a lesser extent financial, benefits cannot be understated and is an option that all home owners should seriously consider. 
+- All that's left is, what will you do? 
+
+## References { .smaller }
+- CAT (Climate Action Tracker) (2022) *Australia | Climate Action Tracker*, Climate Action Tracker website, accessed 5 June 2023. https://climateactiontracker.org/countries/australia/
+- Climate Change Vic (2023) *Victorian Government action on climate change*, Climate Change Victoria website, accessed 5 June 2023. https://www.climatechange.vic.gov.au/victorian-government-action-on-climate-change
+- DCCEEW (Department of Climate Change, Energy, the Environment and Water) (2022) *Australian Energy Update 2022*, accessed 30 May 2023. https://www.energy.gov.au/publications/australian-energy-update-2022
+- Australian Clean Energy Regulator (2021) *NGER Emissions and Energy Threshold Calculator 2020-21*, Clean Energy Regulator website, accessed 3 June 2023. https://www.cleanenergyregulator.gov.au/DocumentAssets/Pages/NGER-Emissions-and-Energy-Threshold-Calculator-2020-21.aspx
+- Bernet R (2021) *How Much CO2 Does a Tree Absorb*, One Tree Planted website, accessed 3 June 2023. https://onetreeplanted.org/blogs/stories/how-much-co2-does-tree-absorb
+- Australian Energy Council (2023) *Solar Report: Quarter 1 2023*, Australian Energy Council website, accessed 5 June 2023. https://www.energycouncil.com.au/media/buqozv3k/australian-energy-council-solar-report-q1-2023.pdf
+
+## References { .smaller }
+- Australian Clean Energy Regulator (2023) *Historical postcode data for small-scale installations*, accessed 30 May 2023. https://www.cleanenergyregulator.gov.au/RET/Forms-and-resources/Postcode-data-for-small-scale-installations/historical-postcode-data-for-small-scale-installations
+- ABS (Australian Bureau of Statistics) *Housing Occupancy and Costs*, accessed 30 May 2023. https://www.abs.gov.au/statistics/people/housing/housing-occupancy-and-costs/2019-20#data-downloads
+- Australian Clean Energy Regulator (2020) *NGER Emissions and Energy Threshold Calculator 2019-20*, Clean Energy Regulator website, accessed 5 June 2023. https://www.cleanenergyregulator.gov.au/DocumentAssets/Pages/NGER-Emissions-and-Energy-Threshold-Calculator-2019-20.aspx
